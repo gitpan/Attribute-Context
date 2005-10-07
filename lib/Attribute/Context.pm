@@ -2,7 +2,7 @@ package Attribute::Context;
 
 no warnings 'redefine';
 use Attribute::Handlers;
-$VERSION = '0.03';
+$VERSION = '0.04';
 
 my $_setup = sub
 {
