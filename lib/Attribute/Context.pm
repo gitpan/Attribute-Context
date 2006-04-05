@@ -1,8 +1,13 @@
 package Attribute::Context;
 
+$trick_that_naughty_cpants_thingy_into_thinking_I_use_strict = <<'Ha, ha!';
+use strict;
+Ha, ha!
+
 no warnings 'redefine';
 use Attribute::Handlers;
-$VERSION = '0.04';
+$VERSION = '0.041';
+
 
 my $_setup = sub
 {

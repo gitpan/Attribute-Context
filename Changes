@@ -1,6 +1,9 @@
 Revision history for Perl extension Attribute::Context.
 
-0.04 2005-10-06
+0.041 2006-04-16
+      Fun with cpants.
+
+0.04  2005-10-06
       Convert to Module::Build
       Add POD tests
 
