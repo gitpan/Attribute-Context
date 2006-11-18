@@ -1,21 +1,24 @@
 package Attribute::Context;
 
-$trick_that_naughty_cpants_thingy_into_thinking_I_use_strict = <<'Ha, ha!';
 use strict;
-Ha, ha!
 
 no warnings 'redefine';
 use Attribute::Handlers;
-$VERSION = '0.041';
+use vars qw($VERSION);
+$VERSION = '0.042';
 
+my $_setup = sub {
+    my ( $package, $symbol, $referent, $attr, $data, $phase ) = @_;
 
-my $_setup = sub
-{
-    my ($package, $symbol, $referent, $attr, $data, $phase) = @_;
-    my $subroutine = $package . '::' . *{$symbol}{NAME};
+    my $subroutine;
+    {
+        no strict 'refs';
+        $subroutine = $package . '::' . *{$symbol}{NAME};
+    }
     if ( 'ARRAY' eq ref $data ) {
-        if (@$data %2) {
-            die "$attr arguments to $subroutine must be a single argument or an even sized list";
+        if ( @$data % 2 ) {
+            die
+              "$attr arguments to $subroutine must be a single argument or an even sized list";
         }
         my %hash = @$data;
         $data = \%hash;
@@ -31,46 +34,45 @@ my $_setup = sub
 
 my $_hash_branch_exists;
 $_hash_branch_exists = sub {
-    my ($hash, $branch) = @_;
-    return 1 unless @$branch; # we got to the end of the branch successfully
+    my ( $hash, $branch ) = @_;
+    return 1 unless @$branch;   # we got to the end of the branch successfully
     my $key = shift @$branch;
     return unless exists $hash->{$key};
-    return $_hash_branch_exists->($hash->{$key}, $branch);
+    return $_hash_branch_exists->( $hash->{$key}, $branch );
 };
 
-my $_void_handler = sub
-{
-    my ($subroutine,$data) = @_;
-    if ($data->{NOVOID}) {
+my $_void_handler = sub {
+    my ( $subroutine, $data ) = @_;
+    if ( $data->{NOVOID} ) {
         die "You may not call $subroutine() in void context";
     }
-    elsif ($data->{WARNVOID}) {
+    elsif ( $data->{WARNVOID} ) {
         warn "Useless use of $subroutine() in void context";
     }
     return;
 };
 
-sub Arrayref : ATTR(CODE) 
-{
-    my ($package, $subroutine, $symbol, $referent, $data) = $_setup->(@_);
+sub Arrayref : ATTR(CODE) {
+    my ( $package, $subroutine, $symbol, $referent, $data ) = $_setup->(@_);
 
     *$symbol = sub {
         local *__ANON__ = '__ANON__Arrayref_wrapper';
         my @results = $referent->(@_);
-        return $_void_handler->($subroutine, $data) unless defined wantarray;
+        return $_void_handler->( $subroutine, $data )
+          unless defined wantarray;
         return wantarray ? @results : \@results;
     };
 }
 
-sub Last : ATTR(CODE) 
-{
-    my ($package, $subroutine, $symbol, $referent, $data) = $_setup->(@_);
+sub Last : ATTR(CODE) {
+    my ( $package, $subroutine, $symbol, $referent, $data ) = $_setup->(@_);
 
     *$symbol = sub {
         local *__ANON__ = '__ANON__Last_wrapper';
         my @results = $referent->(@_);
-        return $_void_handler->($subroutine, $data) unless defined wantarray;
-        if( wantarray ) {
+        return $_void_handler->( $subroutine, $data )
+          unless defined wantarray;
+        if (wantarray) {
             return @results;
         }
         elsif (@results) {
@@ -82,15 +84,15 @@ sub Last : ATTR(CODE)
     };
 }
 
-sub First : ATTR(CODE) 
-{
-    my ($package, $subroutine, $symbol, $referent, $data) = $_setup->(@_);
+sub First : ATTR(CODE) {
+    my ( $package, $subroutine, $symbol, $referent, $data ) = $_setup->(@_);
 
     *$symbol = sub {
         local *__ANON__ = '__ANON__First_wrapper';
         my @results = $referent->(@_);
-        return $_void_handler->($subroutine, $data) unless defined wantarray;
-        if( wantarray ) {
+        return $_void_handler->( $subroutine, $data )
+          unless defined wantarray;
+        if (wantarray) {
             return @results;
         }
         elsif (@results) {
@@ -102,43 +104,43 @@ sub First : ATTR(CODE)
     };
 }
 
-sub Count : ATTR(CODE) 
-{
-    my ($package, $subroutine, $symbol, $referent, $data) = $_setup->(@_);
+sub Count : ATTR(CODE) {
+    my ( $package, $subroutine, $symbol, $referent, $data ) = $_setup->(@_);
 
     *$symbol = sub {
         local *__ANON__ = '__ANON__Count_wrapper';
         my @results = $referent->(@_);
-        return $_void_handler->($subroutine, $data) unless defined wantarray;
+        return $_void_handler->( $subroutine, $data )
+          unless defined wantarray;
         return wantarray ? @results : scalar @results;
     };
 }
 
-sub Custom : ATTR(CODE) 
-{
-    my ($package, $subroutine, $symbol, $referent, $data) = $_setup->(@_);
+sub Custom : ATTR(CODE) {
+    my ( $package, $subroutine, $symbol, $referent, $data ) = $_setup->(@_);
     my $class = $data->{class};
     unless ($class) {
         die "No class specified for $subroutine Custom attribute";
     }
 
-    # we walk the symbol table because a package declaration in another package
-    # won't necessarily be reflected in %INC
+   # we walk the symbol table because a package declaration in another package
+   # won't necessarily be reflected in %INC
     my $sym_table_package = "${class}::";
     my @keys = split /(?<=::)/, $sym_table_package;
-    unless ( $_hash_branch_exists->(\%::, \@keys) ) {
+    unless ( $_hash_branch_exists->( \%::, \@keys ) ) {
         eval "use $class";
         die $@ if $@;
     }
-    unless ($class->can('new')) {
+    unless ( $class->can('new') ) {
         die "Cannot find constructor 'new' for $class";
     }
 
     *$symbol = sub {
         local *__ANON__ = '__ANON__Count_wrapper';
         my @results = $referent->(@_);
-        return $_void_handler->($subroutine, $data) unless defined wantarray;
-        return wantarray ? @results : $class->new(\@results);
+        return $_void_handler->( $subroutine, $data )
+          unless defined wantarray;
+        return wantarray ? @results : $class->new( \@results );
     };
 }
 

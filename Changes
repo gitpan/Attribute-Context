@@ -1,5 +1,10 @@
 Revision history for Perl extension Attribute::Context.
 
+0.042 2006-11-18
+      Really use 'strict' this time.
+      Make a parseable META.yml
+      Set 5.006 as minimum version.
+
 0.041 2006-04-16
       Fun with cpants.
 

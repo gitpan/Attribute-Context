@@ -1,5 +1,6 @@
 #!/usr/bin/perl -w
 
+use 5.006;
 use strict;
 use Module::Build;
 
@@ -12,7 +13,7 @@ my $builder = Module::Build->new(
 
         # No, I don't really require Sub::Uplevel, but I'm tired of my
         # tests failing because of this.
-        'Sub::Uplevel' => 0.09,
+        'Sub::Uplevel'        => 0.09,
         'Attribute::Handlers' => '0.78',
     },
     build_requires => {
